@@ -13,9 +13,7 @@ class TextUtils:
         self._model_type = model_type
         
         self._words_list = [x.replace(".", "") for x in self.cleaned_text.split() if x!=''] + ['.']
-        self._unique_char_list = list(set(self.cleaned_text))
-        
-        print("Unique words: ", len(set(self._words_list)))
+        self._unique_char_list = sorted(set(self.cleaned_text))
 
         if self._model_type == 'char':
             self.char2ix = {v:k for (k,v) in enumerate(self._unique_char_list)}
@@ -28,6 +26,9 @@ class TextUtils:
             self.word2ix = {v:k for (k,v) in enumerate(set(self._words_list))}
             self.ix2word = {v:k for (k,v) in self.word2ix.items()}
 
+        print("Unique words: ", len(set(self._words_list)))
+        print("Unique chars: ", len(set(self._unique_char_list)))
+
         if compute_counts:
             # time-consuming stuff here.
             self._P = self._create_ptable()
@@ -39,17 +40,17 @@ class TextUtils:
 
     def _preprocess(self, data):
         data_str = data.lower()
-        data_str = re.sub(pattern="\s+", repl=" ", string=data_str, flags=re.MULTILINE).strip()
+        # data_str = re.sub(pattern="\s+", repl=" ", string=data_str, flags=re.MULTILINE).strip()
         
         # don't remove the period.
-        data_str = re.sub('[!"\\#\\$%\\&\'\\(\\)\\*\\+,\\-/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}\\~]+', repl="", string=data_str, flags=re.MULTILINE)
+        # data_str = re.sub('[!"\\#\\$%\\&\'\\(\\)\\*\\+,\\-/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}\\~]+', repl="", string=data_str, flags=re.MULTILINE)
         
         # some more ugly punctuation
-        data_str = data_str.replace("“", "").replace("”", "")
+        # data_str = data_str.replace("“", "").replace("”", "")
         
         # lastly, remove the 2+ periods.
         # least....he -> least he
-        data_str = re.sub("\\.{2,}", repl=" ", string=data_str)
+        # data_str = re.sub("\\.{2,}", repl=" ", string=data_str)
         
         return data_str
 
