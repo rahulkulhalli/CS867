@@ -27,6 +27,16 @@ class DatasetForLSTM(Dataset):
     
     def _make_data(self):
         
+        """_summary_
+
+        x = i have to really understand this implementation; i keep forgetting it and that's not good.
+        y = have to really understand this implementation; i keep forgetting it and that's not good.<EOS>
+        
+
+        Returns:
+            _type_: _description_
+        """
+        
         pairs = []
         
         # some sort of switching here for word and char.
@@ -35,19 +45,15 @@ class DatasetForLSTM(Dataset):
         else:
             words = self._text_helper._words_list
         
-        for ix in range(len(words)-self._window_size):
+        for ix in range(0, len(words)-self._window_size-1, self._window_size):
+            
             inp = words[ix:ix+self._window_size]
-            output = words[ix+self._window_size]
+            output = words[ix+1:ix+self._window_size+1]
+            
+            inp = [self._text_helper.char2ix[c] for c in inp]
+            output = [self._text_helper.char2ix[c] for c in output]
             
             pairs.append((inp, output))
-            ix += self._stride
-        
-        if ix < len(words):
-            buffer = ['.' for _ in range(self._window_size)]
-            for i, remaining in enumerate(words[ix:]):
-                buffer[i] = remaining
-            
-            pairs.append((buffer, '.'))
             
         if self._mode == 'train':
             return pairs[:int(0.8 * len(pairs))]
@@ -62,17 +68,11 @@ class DatasetForLSTM(Dataset):
     def __getitem__(self, index):
         
         # no need to convert to OHE. Instead, directly index into the embedding matrix.
-        x_window, target = self.data[index]
+        x, y = self.data[index]
         
         # print(x_window, target)
+            
+        x_tensor = torch.tensor(x)
+        y_tensor = torch.tensor(y)
         
-        if len(x_window) == self._window_size:
-            
-            if self._model_type == 'char':
-                x_tensor = torch.tensor([self._text_helper.char2ix[x] for x in x_window])
-                y_tensor = torch.tensor(self._text_helper.char2ix[target])
-            else:
-                x_tensor = torch.tensor([self._text_helper.word2ix[x] for x in x_window])
-                y_tensor = torch.tensor(self._text_helper.word2ix[target])
-            
-            return x_tensor.long(), y_tensor.long()
+        return x_tensor.long(), y_tensor.long()
