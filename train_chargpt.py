@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
         if trainer.iter_num % 500 == 0:
             # evaluate both the train and test score
-            print(sample(model, "Alas, ", train_history.stoi, train_history.itos, trainer.device))
+            print(sample(model, "Alas, ", train_dataset.stoi, train_dataset.itos, trainer.device))
 
         if trainer.iter_num % 1000 == 0:
             # save the latest model
