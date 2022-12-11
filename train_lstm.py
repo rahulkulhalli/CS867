@@ -23,12 +23,28 @@ def save_model(model_name_or_path: Path, **kwargs):
         torch.save(config, f)
 
 
+def save_plots(plot_name_or_path, train_hx, val_hx):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+
+    ax.plot(train_hx, 'b-')
+    ax.plot(val_hx, 'r-')
+
+    plt.legend(['Training loss', 'Validation loss'])
+    plt.xlabel('Iterations')
+    plt.ylabel('CE Loss')
+
+    plt.savefig(plot_name_or_path)
+    print("Plots saved.")
+
+
 if __name__ == "__main__":
 
     batch_size = 8
-    n_epochs = 15
+    n_epochs = 2
     window_size = 12
-    n_hidden_features = 256
+    n_hidden_features = 128
     n_embedding_dims = 64
     save_every = 2
 
@@ -136,3 +152,6 @@ if __name__ == "__main__":
         train_history=train_history,
         val_history=val_history
     )
+
+    # save plots.
+    save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)

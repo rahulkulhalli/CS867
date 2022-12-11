@@ -17,7 +17,7 @@ def generate_next_char(model, char, ix2char, char2ix, h=None):
     model.eval()
 
     with torch.no_grad():
-        encoded = F.one_hot(torch.tensor(char2ix[char]), num_classes=len(char2ix)).float().reshape((1, -1))
+        x = F.one_hot(torch.tensor(char2ix[char]), num_classes=len(char2ix)).float().reshape((1, 1, -1))
 
         if not h:
             h = model.init_hidden(batch_size=1)
@@ -37,11 +37,11 @@ def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
     outputs = []
     h = net.init_hidden(batch_size=1)
     for char in seed_string:
-        next_char, h = generate_next_char(net, char, txt_utils, h)
+        next_char, h = generate_next_char(net, char, ix2char, char2ix, h)
         outputs.append(next_char)
 
     for ix in range(max_generation_len):
-        next_char, h = generate_next_char(net, outputs[-1], txt_utils, h)
+        next_char, h = generate_next_char(net, outputs[-1], ix2char, char2ix, h)
         outputs.append(next_char)
 
     return ''.join(outputs)
