@@ -9,27 +9,31 @@ class SimpleLSTM(nn.Module):
 
         self.vocab_size = vocab_size
         self.n_hidden = n_hidden
-        self._embedding_dims = embedding_dims
+        # self._embedding_dims = embedding_dims
 
         # embedding matrix will be (vocab, expected_dims). We fine-tune this during backprop too.
-        self.embedding = torch.randn((self.vocab_size, self._embedding_dims), requires_grad=True)
-        self.lstm = nn.LSTM(input_size=self._embedding_dims, hidden_size=self.n_hidden, num_layers=1, bias=False, batch_first=True)
+        # self.embedding = torch.randn((self.vocab_size, self._embedding_dims), requires_grad=True)
+        self.lstm = nn.LSTM(input_size=self.vocab_size, hidden_size=self.n_hidden, num_layers=1, bias=True, batch_first=True)
+        self.hidden2hidden = nn.Linear(self.n_hidden, self.n_hidden)
+        self.dpt = nn.Dropout(p=0.2)
         self.hidden2vocab = nn.Linear(self.n_hidden, vocab_size)
 
     def init_hidden(self, batch_size: int):
         # create two zero vectors.
         # the dims are (1*num_layers, batch_size, num_hidden)
-        h0 = torch.randn((1, batch_size, self.n_hidden), requires_grad=True)
-        c0 = torch.randn((1, batch_size, self.n_hidden), requires_grad=True)
+        h0 = torch.zeros((1, batch_size, self.n_hidden), requires_grad=True)
+        c0 = torch.zeros((1, batch_size, self.n_hidden), requires_grad=True)
         return h0, c0
 
     def forward(self, x, hidden):
-        # store (b, n_vocab) tensors.
-        outputs = []
+        # emb_x = self.embedding[x]
+        out, (h_new, c_new) = self.lstm(x, hidden)
+        out = out.contiguous().view(-1, self.n_hidden)
+        out = self.dpt(out)
+        out = self.hidden2hidden(out)
+        out = self.dpt(out)
+        out = self.hidden2vocab(out)
 
-        emb_x = self.embedding[x]                                   # (b, seq) -> (b, seq, features)
+        # print(out.size())
 
-        out, (h_new, c_new) = self.lstm(emb_x, hidden)
-        linear = self.hidden2vocab(out)
-
-        return linear, (h_new, c_new)
+        return out, (h_new, c_new)

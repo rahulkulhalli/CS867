@@ -1,7 +1,7 @@
 from src.utils.make_lstm_dataset import DatasetForLSTM
 from torch.utils.data import DataLoader
 import torch
-import sys
+import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
 from src.utils.text_utils import TextUtils
@@ -9,69 +9,62 @@ from models.lstm import SimpleLSTM
 from pathlib import Path
 
 
+def generate_next_char(model, char, ix2char, char2ix, h=None):
+    """
+    Given a character, predict the next character.
+    """
+
+    model.eval()
+
+    with torch.no_grad():
+        encoded = F.one_hot(torch.tensor(char2ix[char]), num_classes=len(char2ix)).float().reshape((1, -1))
+
+        if not h:
+            h = model.init_hidden(batch_size=1)
+
+        h = tuple([_h.data for _h in h])
+
+        out, h = model(x, h)
+
+        argmax = F.softmax(out, dim=-1).argmax(dim=-1).squeeze().item()
+
+        return ix2char[argmax], h
+
+
+def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
+    # First, convert all characters in the seed string to their encodings.
+
+    outputs = []
+    h = net.init_hidden(batch_size=1)
+    for char in seed_string:
+        next_char, h = generate_next_char(net, char, txt_utils, h)
+        outputs.append(next_char)
+
+    for ix in range(max_generation_len):
+        next_char, h = generate_next_char(net, outputs[-1], txt_utils, h)
+        outputs.append(next_char)
+
+    return ''.join(outputs)
+
+
 if __name__ == "__main__":
-    
-    # all the input after eval_lstm.py are the words to eval.
-    # prompt = sys.argv[1:]
-    
-    batch_size = 8
-    n_epochs = 5
-    window_size = 4
-    n_hidden_features = 128
-    n_embedding_dims = 64
-    
-    txt_utils = TextUtils(Path("data/c_and_p.txt"), compute_counts=False, model_type='char') 
-    
-    train_dataset = DatasetForLSTM(txt_utils, window_size=window_size, model_type='char', stride=1, mode='train')
-    test_dataset = DatasetForLSTM(txt_utils, window_size=window_size, model_type='char', stride=1, mode='val')
-    
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
-    
+
+    model_name_or_path = Path("models/lstm_final.pt")
+
+    with open(model_name_or_path, "rb") as f:
+        config = torch.load(f)
+
     # batch_first is set to True.
     model = SimpleLSTM (
-        vocab_size=len(txt_utils.char2ix),
-        n_hidden=n_hidden_features,
-        embedding_dims=n_embedding_dims
+        vocab_size=len(config['ix2char']),
+        n_hidden=config['n_hidden'],
+        embedding_dims=64
     )
-    
-    # optimizer = optim.Adam(model.parameters(), lr=1e-3)
-    criterion = nn.NLLLoss()
-    
-    load_path = Path("models/lstm_final.pt")
-    if load_path.exists():
-        
-        model.load_state_dict(torch.load(load_path, map_location='cpu'))
-        print("LSTM Model weights loaded.")
-        model.eval()
-        
-        # sample from the model.
-        seed = "i wanted to know how to proceed from h"
-        preprocessed_seed = txt_utils.preprocess_live_input(seed)
-        dataset = DatasetForLSTM(txt_utils, window_size=window_size, stride=1, mode='test', test_data=preprocessed_seed)
-        loader = DataLoader(dataset=dataset, shuffle=False, batch_size=1, drop_last=True)
-        
-        mean_loss = []
-        next_chars = []
-        with torch.no_grad():
-            for iter_ix, (x, y) in enumerate(loader):
-                h = model.init_hidden(batch_size=1)
-                
-                h = tuple([e.data for e in h])
-                
-                # (out -> (b, seq_len, n_features))
-                logits, h = model(x, h)
-                probs = F.softmax(logits, dim=1).detach().squeeze()
-                
-                out = F.log_softmax(logits, dim=1)
-                
-                # sample instead of argmax for a more realistic output.
-                next_chars.append(torch.multinomial(probs, num_samples=1, replacement=True).item())
-                
-                loss = criterion(out, y)
-                
-                mean_loss.append(loss.detach().item())
-                
-                # print(f"mean loss: {torch.tensor(mean_loss).mean()}")
-        
-        print(''.join([txt_utils.ix2char[ix] for ix in next_chars]))
+
+    # load the weights.
+    model.load_state_dict(config['state_dict'])
+    model.eval()
+
+    output_string = sample(model, "hello, ", config['ix2char'], config['char2ix'])
+
+    print(output_string)

@@ -8,10 +8,10 @@ class TextUtils:
     def __init__(self, fpath: Path, compute_counts: bool = False, model_type: str = 'char'):
         with open(fpath, "r") as f:
             data = f.read()
-        
+
         self.cleaned_text = self._preprocess(data)
         self._model_type = model_type
-        
+
         self._words_list = [x.replace(".", "") for x in self.cleaned_text.split() if x!=''] + ['.']
         self._unique_char_list = sorted(set(self.cleaned_text))
 
@@ -41,17 +41,17 @@ class TextUtils:
     def _preprocess(self, data):
         data_str = data.lower()
         # data_str = re.sub(pattern="\s+", repl=" ", string=data_str, flags=re.MULTILINE).strip()
-        
+
         # don't remove the period.
         # data_str = re.sub('[!"\\#\\$%\\&\'\\(\\)\\*\\+,\\-/:;<=>\\?@\\[\\\\\\]\\^_`\\{\\|\\}\\~]+', repl="", string=data_str, flags=re.MULTILINE)
-        
+
         # some more ugly punctuation
         # data_str = data_str.replace("“", "").replace("”", "")
-        
+
         # lastly, remove the 2+ periods.
         # least....he -> least he
         # data_str = re.sub("\\.{2,}", repl=" ", string=data_str)
-        
+
         return data_str
 
     def _create_ptable(self):
@@ -64,7 +64,7 @@ class TextUtils:
             p[self.char2ix[c1], self.char2ix[c2]] += 1.
 
         return p
-    
+
     def preprocess_live_input(self, input_stream: str):
         return self._preprocess(input_stream)
 
