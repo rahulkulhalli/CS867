@@ -105,8 +105,8 @@ def save_model(model, **kwargs):
     }
 
     model_name_or_path = kwargs['mpath']
-    with open(model_name_or_path, 'wb'):
-        torch.save(config)
+    with open(model_name_or_path, 'wb') as f:
+        torch.save(config, f)
 
     print("Saved model checkpoint and history.")
 
@@ -141,16 +141,17 @@ if __name__ == '__main__':
 
         if trainer.iter_num % 500 == 0:
             # evaluate both the train and test score
-            print(sample(model, "Alas, ", trainer.stoi, trainer.itos, trainer.device))
+            print(sample(model, "Alas, ", train_history.stoi, train_history.itos, trainer.device))
 
+        if trainer.iter_num % 1000 == 0:
             # save the latest model
             ckpt_path = os.path.join(config.system.work_dir, f"model_iter{trainer.iter_num}_{corpus_name}.pt")
             save_model(
                 model,
                 mpath=ckpt_path,
-                stoi=trainer.stoi,
-                itos=trainer.itos,
-                train_hx=
+                stoi=train_dataset.stoi,
+                itos=train_dataset.itos,
+                train_hx=trainer.train_history
             )
 
             # revert model to training mode
