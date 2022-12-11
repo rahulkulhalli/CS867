@@ -8,12 +8,42 @@ from src.utils.text_utils import TextUtils
 from models.lstm import SimpleLSTM
 from pathlib import Path
 
+def save_model(model_name_or_path: Path, **kwargs):
+    config = {
+        "state_dict": kwargs['state_dict'],
+        "n_hidden": kwargs['n_hidden_features'],
+        "tokens": kwargs['unique_char_list'],
+        "ix2char": kwargs['ix2char'],
+        "char2ix": kwargs['char2ix'],
+        "train_history": kwargs['train_history'],
+        "val_history": kwargs['val_history']
+    }
+
+    with open(model_name_or_path, "wb") as f:
+        torch.save(config, f)
+
+
+def save_plots(plot_name_or_path, train_hx, val_hx):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(nrows=1, ncols=1)
+
+    ax.plot(train_hx, 'b-')
+    ax.plot(val_hx, 'r-')
+
+    plt.legend(['Training loss', 'Validation loss'])
+    plt.xlabel('Iterations')
+    plt.ylabel('CE Loss')
+
+    plt.savefig(plot_name_or_path)
+    print("Plots saved.")
+
 
 if __name__ == "__main__":
 
     batch_size = 8
-    n_epochs = 5
-    window_size = 4
+    n_epochs = 2
+    window_size = 12
     n_hidden_features = 128
     n_embedding_dims = 64
     save_every = 2
@@ -26,8 +56,6 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
 
-    TRAIN = True
-
     # batch_first is set to True.
     model = SimpleLSTM (
         vocab_size=len(txt_utils.char2ix),
@@ -35,70 +63,95 @@ if __name__ == "__main__":
         embedding_dims=n_embedding_dims
     )
 
+    print(f"Total model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
+
     optimizer = optim.Adam(model.parameters(), lr=1e-3)
     criterion = nn.CrossEntropyLoss()
 
-    if TRAIN:
+    train_history, val_history = list(), list()
+    mean_loss = list()
+    for epoch_ix in range(1, n_epochs+1):
 
-        mean_loss = []
-        for epoch_ix in range(1, n_epochs+1):
-            if epoch_ix > 1:
-                # reduce lr by 20%.
-                optimizer.param_groups[0]['lr'] *= 0.95
+        model.train()
 
-            h = model.init_hidden(batch_size=batch_size)
+        print("=================== Training ===================")
 
-            for iter_ix, (x, y) in enumerate(train_loader):
+        if (epoch_ix % 2) == 0:
+            # reduce lr by 5%.
+            optimizer.param_groups[0]['lr'] *= 0.95
 
-                h = tuple([e.data for e in h])
+        h = model.init_hidden(batch_size=batch_size)
 
-                optimizer.zero_grad()
+        for iter_ix, (x, y) in enumerate(train_loader):
 
-                # (out -> (b, seq_len, n_features))
-                logits, h = model(x, h)
+            h = tuple([e.data for e in h])
 
-                seq_loss = torch.tensor(0., requires_grad=True)
+            optimizer.zero_grad()
 
-                for i in range(window_size):
-                    seq_loss = seq_loss + criterion(logits[:, i, :], y[:, i])
+            # (out -> (b, seq_len, n_features))
+            logits, h = model(x, h)
 
-                seq_loss.backward()
+            loss = criterion(logits, y.view(batch_size * window_size))
+            loss.backward()
 
-                mean_loss.append(seq_loss.detach().item())
+            nn.utils.clip_grad_norm_(model.parameters(), 5.)
 
-                if (iter_ix+1) % 5000 == 0:
-                    print(f"epoch: {epoch_ix}, iteration: {iter_ix+1}, mean loss: {torch.tensor(mean_loss).mean()}")
+            mean_loss.append(loss.detach().item())
+            train_history.append(loss.detach().item())
 
-                optimizer.step()
+            if (iter_ix+1) % 1000 == 0:
+                print(f"epoch: {epoch_ix}, iteration: {iter_ix+1}, mean train loss: {torch.tensor(mean_loss).mean()}")
 
-            if epoch_ix % save_every == 0:
-                print("Saving LSTM model.")
-                torch.save(model.state_dict(), Path(f"models/lstm_{epoch_ix}.pt"))
+            optimizer.step()
 
-        # save the model.
-        torch.save(model.state_dict(), Path("models/lstm_final.pth"))
+        if epoch_ix % save_every == 0:
+            print("Saving LSTM model.")
+            save_model(
+                Path(f"models/lstm_epoch_{epoch_ix}.pt"),
+                state_dict=model.state_dict(),
+                n_hidden_features=n_hidden_features,
+                unique_char_list=txt_utils._unique_char_list,
+                ix2char=txt_utils.ix2char,
+                char2ix=txt_utils.char2ix,
+                train_history=train_history,
+                val_history=val_history
+            )
 
-        print(50*'+')
-        print("TESTING PERFORMANCE...")
-        print(50*'+')
+        print("=================== Validation ===================")
 
-        mean_loss = []
+        model.eval()
+
+        mean_val_loss = list()
         with torch.no_grad():
+            val_h = model.init_hidden(batch_size=batch_size)
+
             for iter_ix, (x, y) in enumerate(test_loader):
-                h = model.init_hidden(batch_size=batch_size)
 
-                # print(x.shape, y.shape)
-
-                h = tuple([e.data for e in h])
+                val_h = tuple([e.data for e in val_h])
 
                 # (out -> (b, seq_len, n_features))
-                logits, h = model(x, h)
+                logits, val_h = model(x, val_h)
 
-                out = F.log_softmax(logits, dim=1)
+                val_loss = criterion(logits, y.view(batch_size * window_size))
 
-                loss = criterion(out, y)
+                mean_val_loss.append(val_loss.detach().item())
+                val_history.append(val_loss.detach().item())
 
-                mean_loss.append(loss.detach().item())
+                if (iter_ix+1) % 1000 == 0:
+                    print(f"epoch: {epoch_ix}, iteration: {iter_ix+1}, mean val loss: {torch.tensor(mean_val_loss).mean()}")
 
-                if (iter_ix+1) % 250 == 0:
-                    print(f"epoch: {epoch_ix}, iteration: {iter_ix+1}, mean loss: {torch.tensor(mean_loss).mean()}")
+    # save final model
+    print("Saving final model..")
+    save_model(
+        Path("models/lstm_final.pt"),
+        state_dict=model.state_dict(),
+        n_hidden_features=n_hidden_features,
+        unique_char_list=txt_utils._unique_char_list,
+        ix2char=txt_utils.ix2char,
+        char2ix=txt_utils.char2ix,
+        train_history=train_history,
+        val_history=val_history
+    )
+
+    # save plots.
+    save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)

@@ -47,6 +47,7 @@ class Trainer:
         self.iter_num = 0
         self.iter_time = 0.0
         self.iter_dt = 0.0
+        self.train_history = list()
 
     def add_callback(self, onevent: str, callback):
         self.callbacks[onevent].append(callback)
@@ -95,6 +96,7 @@ class Trainer:
             # backprop and update the parameters
             model.zero_grad(set_to_none=True)
             self.loss.backward()
+            self.train_history.append(self.loss.detach().item())
             torch.nn.utils.clip_grad_norm_(model.parameters(), config.grad_norm_clip)
             self.optimizer.step()
 

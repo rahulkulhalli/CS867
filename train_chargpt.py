@@ -24,7 +24,7 @@ def get_config():
     # system
     C.system = CN()
     C.system.seed = 3407
-    C.system.work_dir = './out/chargpt'
+    C.system.work_dir = './models/'
 
     # data
     C.data = CharDataset.get_default_config()
@@ -36,6 +36,7 @@ def get_config():
     # trainer
     C.trainer = Trainer.get_default_config()
     C.trainer.learning_rate = 5e-4 # the model we're using is so small that we can go a bit faster
+    C.max_iters = 20000
 
     return C
 
@@ -85,12 +86,38 @@ class CharDataset(Dataset):
 
 # -----------------------------------------------------------------------------
 
+def sample(model, seed_string, stoi, itos, device):
+    model.eval()
+    with torch.no_grad():
+        # sample from the model...
+        x = torch.tensor([stoi[s] for s in seed_string], dtype=torch.long)[None,...].to(device)
+        y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
+        generated_str = ''.join([itos[int(i)] for i in y])
+        return generated_str
+
+
+def save_model(model, **kwargs):
+    config = {
+        "state_dict": model.state_dict(),
+        "stoi": kwargs['stoi'],
+        "itos": kwargs['itos'],
+        "train_history": kwargs['train_hx']
+    }
+
+    model_name_or_path = kwargs['mpath']
+    with open(model_name_or_path, 'wb') as f:
+        torch.save(config, f)
+
+    print("Saved model checkpoint and history.")
+
+
 if __name__ == '__main__':
 
     # get default config and overrides from the command line, if any
     config = get_config()
     config.merge_from_args(sys.argv[1:])
-    print(config)
+    # print(config)
+    corpus_name = "CrimeAndPunishment"
     setup_logging(config)
     set_seed(config.system.seed)
 
@@ -114,18 +141,19 @@ if __name__ == '__main__':
 
         if trainer.iter_num % 500 == 0:
             # evaluate both the train and test score
-            model.eval()
-            with torch.no_grad():
-                # sample from the model...
-                context = "O God, O God!"
-                x = torch.tensor([train_dataset.stoi[s] for s in context], dtype=torch.long)[None,...].to(trainer.device)
-                y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
-                completion = ''.join([train_dataset.itos[int(i)] for i in y])
-                print(completion)
+            print(sample(model, "Alas, ", train_dataset.stoi, train_dataset.itos, trainer.device))
+
+        if trainer.iter_num % 1000 == 0:
             # save the latest model
-            print("saving model")
-            ckpt_path = os.path.join(config.system.work_dir, "model.pt")
-            torch.save(model.state_dict(), ckpt_path)
+            ckpt_path = os.path.join(config.system.work_dir, f"model_iter{trainer.iter_num}_{corpus_name}.pt")
+            save_model(
+                model,
+                mpath=ckpt_path,
+                stoi=train_dataset.stoi,
+                itos=train_dataset.itos,
+                train_hx=trainer.train_history
+            )
+
             # revert model to training mode
             model.train()
 
