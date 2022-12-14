@@ -65,8 +65,8 @@ if __name__ == "__main__":
 
     model_mapper = {
         "c": Path("models/lstm_weights/lstm_final_CrimeAndPunishment.pt"),
-        "d": Path("models/lstm_weights/lstm_final_dracula.pt"),
-        "m": Path("models/lstm_weights/lstm_final_kafka.pt")
+        "d": Path("models/lstm_weights/lstm_final_Dracula.pt"),
+        "m": Path("models/lstm_weights/lstm_final_Kafka.pt")
     }
 
     with open(model_mapper[domain], 'rb') as f:
@@ -91,5 +91,7 @@ if __name__ == "__main__":
         seed_string += " "
 
     output_string = sample(model, seed_string, config['ix2char'], config['char2ix'])
-
-    print(output_string)
+    print(50*'=')
+    print("Generated text")
+    print(50*'=')
+    print(seed_string + output_string)
