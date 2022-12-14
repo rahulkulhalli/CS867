@@ -42,11 +42,13 @@ def save_plots(plot_name_or_path, train_hx, val_hx):
 if __name__ == "__main__":
 
     batch_size = 8
-    n_epochs = 2
-    window_size = 12
-    n_hidden_features = 128
+    n_epochs = 4
+    window_size = 50
+    n_hidden_features = 256
     n_embedding_dims = 64
     save_every = 2
+
+    domain = "CrimeAndPunishment"
 
     txt_utils = TextUtils(Path("data/c_and_p.txt"), compute_counts=False, model_type='char')
 
@@ -107,7 +109,7 @@ if __name__ == "__main__":
         if epoch_ix % save_every == 0:
             print("Saving LSTM model.")
             save_model(
-                Path(f"models/lstm_epoch_{epoch_ix}.pt"),
+                Path(f"models/lstm_weights/lstm_{domain}_{epoch_ix}.pt"),
                 state_dict=model.state_dict(),
                 n_hidden_features=n_hidden_features,
                 unique_char_list=txt_utils._unique_char_list,
@@ -143,7 +145,7 @@ if __name__ == "__main__":
     # save final model
     print("Saving final model..")
     save_model(
-        Path("models/lstm_final.pt"),
+        Path(f"models/lstm_weights/lstm_final_{domain}.pt"),
         state_dict=model.state_dict(),
         n_hidden_features=n_hidden_features,
         unique_char_list=txt_utils._unique_char_list,
@@ -154,4 +156,4 @@ if __name__ == "__main__":
     )
 
     # save plots.
-    save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)
+    # save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)
