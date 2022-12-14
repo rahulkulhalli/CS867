@@ -42,9 +42,9 @@ def save_plots(plot_name_or_path, train_hx, val_hx):
 if __name__ == "__main__":
 
     batch_size = 8
-    n_epochs = 2
-    window_size = 12
-    n_hidden_features = 128
+    n_epochs = 4
+    window_size = 50
+    n_hidden_features = 256
     n_embedding_dims = 64
     save_every = 2
 
@@ -156,4 +156,4 @@ if __name__ == "__main__":
     )
 
     # save plots.
-    save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)
+    # save_plots(Path("models/lstm_final_plots.png"), train_history, val_history)
