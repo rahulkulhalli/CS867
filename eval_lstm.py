@@ -26,9 +26,12 @@ def generate_next_char(model, char, ix2char, char2ix, h=None):
 
         out, h = model(x, h)
 
-        argmax = F.softmax(out, dim=-1).argmax(dim=-1).squeeze().item()
+        probs = F.softmax(out.detach(), dim=-1).squeeze()
 
-        return ix2char[argmax], h
+        arg = torch.multinomial(probs, num_samples=1, replacement=True).item()
+        # print(arg)
+
+        return ix2char[arg], h
 
 
 def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
@@ -53,10 +56,21 @@ def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
 
 if __name__ == "__main__":
 
-    model_name_or_path = Path("models/lstm_final.pt")
+    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d]): ")
+    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d"]:
+        domain = domain_inp
+    else:
+        # let's default to CrimeAndPunishment.
+        domain = "c"
 
-    with open(model_name_or_path, "rb") as f:
-        config = torch.load(f)
+    model_mapper = {
+        "c": Path("models/lstm_weights/lstm_final_CrimeAndPunishment.pt"),
+        "d": Path("models/lstm_weights/lstm_final_dracula.pt"),
+        "m": Path("models/lstm_weights/lstm_final_kafka.pt")
+    }
+
+    with open(model_mapper[domain], 'rb') as f:
+        config = torch.load(f, map_location='cpu')
 
     # batch_first is set to True.
     model = SimpleLSTM (
@@ -67,8 +81,15 @@ if __name__ == "__main__":
 
     # load the weights.
     model.load_state_dict(config['state_dict'])
+    print("Model weights loaded!")
     model.eval()
 
-    output_string = sample(model, "hello, ", config['ix2char'], config['char2ix'])
+    seed_string = input("Start writing from here: ")
+
+    # If the user doesn't add whitespace, add manually.
+    if seed_string[-1] != " ":
+        seed_string += " "
+
+    output_string = sample(model, seed_string, config['ix2char'], config['char2ix'])
 
     print(output_string)

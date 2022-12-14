@@ -9,8 +9,10 @@ import sys
 from pathlib import Path
 
 import torch
+from torch.utils.data import Dataset
 
 from models.mingpt.model import GPT
+from models.mingpt.trainer import Trainer
 from models.mingpt.utils import set_seed, setup_logging, CfgNode as CN
 
 # -----------------------------------------------------------------------------
