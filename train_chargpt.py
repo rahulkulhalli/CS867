@@ -117,12 +117,12 @@ if __name__ == '__main__':
     config = get_config()
     config.merge_from_args(sys.argv[1:])
     # print(config)
-    corpus_name = "CrimeAndPunishment"
+    corpus_name = "Frankenstein"
     setup_logging(config)
     set_seed(config.system.seed)
 
     # construct the training dataset
-    text = open('data/c_and_p.txt', 'r').read() # don't worry we won't run out of file handles
+    text = open('data/frankenstein', 'r').read() # don't worry we won't run out of file handles
     train_dataset = CharDataset(config.data, text)
 
     # construct the model
