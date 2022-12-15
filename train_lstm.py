@@ -41,16 +41,25 @@ def save_plots(plot_name_or_path, train_hx, val_hx):
 
 if __name__ == "__main__":
 
+    # LSTM hparams
     batch_size = 8
     n_epochs = 4
     window_size = 50
     n_hidden_features = 256
     n_embedding_dims = 64
     save_every = 2
+    grad_clip = 5.
 
+    # data params
     domain = "CrimeAndPunishment"
+    data_path = Path("data/c_and_p.txt")
 
-    txt_utils = TextUtils(Path("data/c_and_p.txt"), compute_counts=False, model_type='char')
+    # optim params
+    lr = 1e-3
+    reduce_every = 2
+    keep_factor = 0.95
+
+    txt_utils = TextUtils(data_path, compute_counts=False, model_type='char')
 
     train_dataset = DatasetForLSTM(txt_utils, window_size=window_size, model_type='char', stride=1, mode='train')
     test_dataset = DatasetForLSTM(txt_utils, window_size=window_size, model_type='char', stride=1, mode='val')
@@ -67,7 +76,7 @@ if __name__ == "__main__":
 
     print(f"Total model parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad)}")
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
     criterion = nn.CrossEntropyLoss()
 
     train_history, val_history = list(), list()
@@ -78,9 +87,9 @@ if __name__ == "__main__":
 
         print("=================== Training ===================")
 
-        if (epoch_ix % 2) == 0:
+        if (epoch_ix % reduce_every) == 0:
             # reduce lr by 5%.
-            optimizer.param_groups[0]['lr'] *= 0.95
+            optimizer.param_groups[0]['lr'] *= keep_factor
 
         h = model.init_hidden(batch_size=batch_size)
 
@@ -96,7 +105,7 @@ if __name__ == "__main__":
             loss = criterion(logits, y.view(batch_size * window_size))
             loss.backward()
 
-            nn.utils.clip_grad_norm_(model.parameters(), 5.)
+            nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
 
             mean_loss.append(loss.detach().item())
             train_history.append(loss.detach().item())
