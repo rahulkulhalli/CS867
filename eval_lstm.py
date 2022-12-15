@@ -56,8 +56,8 @@ def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
 
 if __name__ == "__main__":
 
-    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d]): ")
-    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d"]:
+    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d], Frankenstein [f], Little Women [l]): ")
+    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d", "f", "l"]:
         domain = domain_inp
     else:
         # let's default to CrimeAndPunishment.
@@ -66,7 +66,9 @@ if __name__ == "__main__":
     model_mapper = {
         "c": Path("models/lstm_weights/lstm_final_CrimeAndPunishment.pt"),
         "d": Path("models/lstm_weights/lstm_final_Dracula.pt"),
-        "m": Path("models/lstm_weights/lstm_final_Kafka.pt")
+        "m": Path("models/lstm_weights/lstm_final_Kafka.pt"),
+        "f": Path("models/lstm_weights/lstm_final_Frankenstein.pt"),
+        "l": Path("models/lstm_weights/lstm_final_LittleWomen.pt")
     }
 
     with open(model_mapper[domain], 'rb') as f:

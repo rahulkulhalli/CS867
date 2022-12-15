@@ -113,8 +113,8 @@ def save_model(model, **kwargs):
 
 if __name__ == '__main__':
 
-    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d]): ")
-    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d"]:
+    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d], Frankenstein [f], Little Women [l]): ")
+    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d", "f", "l"]:
         domain = domain_inp
     else:
         # let's default to CrimeAndPunishment.
@@ -123,7 +123,9 @@ if __name__ == '__main__':
     model_mapper = {
         "c": Path("models/gpt_weights/model_iter8000_CrimeAndPunishment.pt"),
         "d": Path("models/gpt_weights/model_iter34000_Dracula.pt"),
-        "m": Path("models/gpt_weights/model_iter9000_Kafka.pt")
+        "m": Path("models/gpt_weights/model_iter9000_Kafka.pt"),
+        "f": Path("models/gpt_weights/minGPT_23000_Frankenstein.pt"),
+        "l": Path("models/gpt_weights/model_iter32000_LittleWomen.pt")
     }
 
     with open(model_mapper[domain], 'rb') as f:
