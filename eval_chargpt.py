@@ -111,24 +111,9 @@ def save_model(model, **kwargs):
     print("Saved model checkpoint and history.")
 
 
-if __name__ == '__main__':
+def get_gpt_output(model_weights_path, seed_string):
 
-    domain_inp = input("Select the domain (Metamorphosis [m], Crime and Punishment [c], Dracula [d], Frankenstein [f], Little Women [l]): ")
-    if domain_inp != "" and domain_inp.lower() in ["m", "c", "d", "f", "l"]:
-        domain = domain_inp
-    else:
-        # let's default to CrimeAndPunishment.
-        domain = "c"
-
-    model_mapper = {
-        "c": Path("models/gpt_weights/model_iter8000_CrimeAndPunishment.pt"),
-        "d": Path("models/gpt_weights/model_iter34000_Dracula.pt"),
-        "m": Path("models/gpt_weights/model_iter9000_Kafka.pt"),
-        "f": Path("models/gpt_weights/minGPT_23000_Frankenstein.pt"),
-        "l": Path("models/gpt_weights/model_iter32000_LittleWomen.pt")
-    }
-
-    with open(model_mapper[domain], 'rb') as f:
+    with open(model_weights_path, 'rb') as f:
         ckpt_config = torch.load(f, map_location='cpu')
 
     # # get default config and overrides from the command line, if any
@@ -145,16 +130,12 @@ if __name__ == '__main__':
     # load the weights and set it to eval mode
     model.load_state_dict(ckpt_config["state_dict"])
     model.eval()
-    print("Model weights loaded")
 
     device = torch.device('cpu')
-    seed_string = input("Start writing from here: ")
 
     # If the user doesn't add whitespace, add manually.
     if seed_string[-1] != " ":
         seed_string += " "
 
     output = sample(model, seed_string, ckpt_config['stoi'], ckpt_config['itos'], device)
-    print(50*'=')
-    print(f"Model output: {output}")
-    print(50*'=')
+    return output
