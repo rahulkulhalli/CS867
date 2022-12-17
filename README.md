@@ -9,6 +9,9 @@ We strongly recommend that you start off with a fresh conda environment. All our
 
 `conda create -n cs667 -y python==3.8
 
+- Activate the environment:
+
+`conda activate cs667`
 
 - Next, clone this repository:
 
@@ -16,8 +19,8 @@ We strongly recommend that you start off with a fresh conda environment. All our
 
 
 - cd into the repo and run `requirements.txt`:
-
-`cd CS867`
+`
+cd CS867`
 
 `pip3 install -r requirements.txt`
 
