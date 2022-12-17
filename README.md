@@ -7,7 +7,7 @@ We strongly recommend that you start off with a fresh conda environment. All our
 
 - After installing conda, create a new environment with a clean Python 3.8.6 image using the following command:
 
-`conda create -n cs667 -y python==3.8.6`
+`conda create -n cs667 -y python==3.8
 
 
 - Next, clone this repository:
