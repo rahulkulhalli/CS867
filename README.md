@@ -18,11 +18,11 @@ We strongly recommend that you start off with a fresh conda environment. All our
 `git clone https://github.com/rahulkulhalli/CS867.git`
 
 
-- cd into the repo and run `requirements.txt`:
+- cd into the repo and install torch:
 `
 cd CS867`
 
-`pip3 install -r requirements.txt`
+`conda install pytorch torchvision torchaudio cpuonly -c pytorch -y`
 
 
 - Finally, run the interactive evaluation script:
