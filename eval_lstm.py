@@ -56,6 +56,9 @@ def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
 
 def get_lstm_output(model_weights_path, seed_string, max_gen_len=1000):
 
+    # we don't handle uppercases (if any).
+    seed_string_in = seed_string.lower()
+
     with open(model_weights_path, 'rb') as f:
         config = torch.load(f, map_location='cpu')
 
