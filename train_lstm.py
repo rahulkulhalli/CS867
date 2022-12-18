@@ -49,6 +49,7 @@ if __name__ == "__main__":
     n_embedding_dims = 64
     save_every = 2
     grad_clip = 5.
+    num_lstm_layers = 3
 
     # data params
     domain = "CrimeAndPunishment"
