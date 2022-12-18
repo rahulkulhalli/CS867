@@ -1,7 +1,7 @@
 import argparse
 from src.utils.misc_utils import Domain, Model
 from pathlib import Path
-from eval_markov import get_markov_ouput
+from eval_markov import get_markov_output
 from eval_lstm import get_lstm_output
 from eval_chargpt import get_gpt_output
 
@@ -68,9 +68,10 @@ if __name__ == "__main__":
         user_input = input("Start writing from here :: ")
 
         # Load and call Markov.
-        markov_output = get_markov_ouput(
+        markov_output = get_markov_output(
             data_path=domain_weights[Model.MARKOV],
-            seed_string=user_input
+            seed_string=user_input,
+            max_gen_len=max_gen_limit
         )
 
         print_sep()
@@ -82,7 +83,8 @@ if __name__ == "__main__":
 
         lstm_output = get_lstm_output(
             model_weights_path=domain_weights[Model.LSTM],
-            seed_string=user_input
+            seed_string=user_input,
+            max_gen_len=max_gen_limit
         )
 
         print("Generated LSTM Output ::", end='\n\n')
@@ -92,7 +94,8 @@ if __name__ == "__main__":
 
         gpt_output = get_gpt_output(
             model_weights_path=domain_weights[Model.GPT],
-            seed_string=user_input
+            seed_string=user_input,
+            max_gen_len=max_gen_limit
         )
 
         print("Generated minGPT Output ::", end='\n\n')

@@ -5,7 +5,7 @@ from src.utils.text_utils import TextUtils
 from models.markov_model import MarkovModel
 
 
-def get_markov_ouput(data_path: Path, seed_string: str, model_type: str = 'char', max_gen_len: int = 1000):
+def get_markov_output(data_path: Path, seed_string: str, model_type: str = 'char', max_gen_len: int = 1000):
     txt_utils = TextUtils(data_path, compute_counts=True, model_type='char', get_from_cache=True)
 
     if seed_string[-1] == " ":

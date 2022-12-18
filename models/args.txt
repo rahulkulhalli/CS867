@@ -1,1 +1,1 @@
-eval_all.py --gen-limit 1000
+eval_all.py --gen-limit 200
