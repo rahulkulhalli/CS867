@@ -54,7 +54,7 @@ def sample(net, seed_string, ix2char, char2ix, max_generation_len=1000):
     return ''.join(outputs)
 
 
-def get_lstm_output(model_weights_path, seed_string):
+def get_lstm_output(model_weights_path, seed_string, max_gen_len=1000):
 
     with open(model_weights_path, 'rb') as f:
         config = torch.load(f, map_location='cpu')
@@ -74,5 +74,5 @@ def get_lstm_output(model_weights_path, seed_string):
     if seed_string[-1] != " ":
         seed_string += " "
 
-    output_string = sample(model, seed_string, config['ix2char'], config['char2ix'])
+    output_string = sample(model, seed_string, config['ix2char'], config['char2ix'], max_gen_len)
     return seed_string + output_string

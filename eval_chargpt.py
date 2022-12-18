@@ -86,12 +86,12 @@ class CharDataset(Dataset):
 
 # -----------------------------------------------------------------------------
 
-def sample(model, seed_string, stoi, itos, device):
+def sample(model, seed_string, stoi, itos, device, max_gen_len=1000):
     model.eval()
     with torch.no_grad():
         # sample from the model...
         x = torch.tensor([stoi[s] for s in seed_string], dtype=torch.long)[None,...].to(device)
-        y = model.generate(x, 500, temperature=1.0, do_sample=True, top_k=10)[0]
+        y = model.generate(x, max_gen_len, temperature=1.0, do_sample=True, top_k=10)[0]
         generated_str = ''.join([itos[int(i)] for i in y])
         return generated_str
 
@@ -111,14 +111,14 @@ def save_model(model, **kwargs):
     print("Saved model checkpoint and history.")
 
 
-def get_gpt_output(model_weights_path, seed_string):
+def get_gpt_output(model_weights_path, seed_string, max_gen_len=1000):
 
     with open(model_weights_path, 'rb') as f:
         ckpt_config = torch.load(f, map_location='cpu')
 
     # # get default config and overrides from the command line, if any
     config = get_config()
-    config.merge_from_args(sys.argv[1:])
+    # config.merge_from_args(sys.argv[1:])
     setup_logging(config)
     set_seed(config.system.seed)
 
@@ -137,5 +137,5 @@ def get_gpt_output(model_weights_path, seed_string):
     if seed_string[-1] != " ":
         seed_string += " "
 
-    output = sample(model, seed_string, ckpt_config['stoi'], ckpt_config['itos'], device)
+    output = sample(model, seed_string, ckpt_config['stoi'], ckpt_config['itos'], device, max_gen_len)
     return output

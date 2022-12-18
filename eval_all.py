@@ -51,6 +51,13 @@ def print_sep():
 
 
 if __name__ == "__main__":
+
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument("--gen-limit", required=False)
+    args = arg_parser.parse_args()
+
+    max_gen_limit = int(args.gen_limit) if args.gen_limit else 500
+
     print(150*'=')
     print("Hello, welcome to our CIS667 project implementation! Below, you may choose one of the five playground domains and create your own story!")
     print(150*'=')
