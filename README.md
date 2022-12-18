@@ -16,7 +16,7 @@ This repository will contain our implementation of the CS667 (Introduction to AI
 
 We strongly recommend that you start off with a fresh conda environment. All our experiments were carried out on Python 3.8.6.
 
-If you do not have anaconda or miniconda installed on your device, start from **step 1**. Otherwise, skip to **step 2**.
+If you do not have anaconda or miniconda installed on your device, start from **step 1**. Otherwise, skip to **step 2**. Our only dependency is that of PyTorch, so if you already have PyTorch, you may go to **step 6** directly. Our code works for the latest stable release of PyTorch, which is why we have not specified a tight version binding or a *requirements.txt* file. 
 
 #### [1] Download and configure miniconda, a lightweight version of anaconda
 Download the latest release of miniconda from [here](https://docs.conda.io/en/latest/miniconda.html).
